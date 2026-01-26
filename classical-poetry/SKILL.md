@@ -379,28 +379,55 @@ python3 $SKILL_ROOT/scripts/poetry_checker.py \
 
 ### Python 环境要求
 
-**默认使用 `python3` 命令**来运行脚本。
+**Python 检测优先级（按顺序）：**
 
-**环境检测：**
-在第一次调用 Python 脚本时，如果遇到 "command not found" 或类似错误：
-1. 用中文告知用户："检测到您的系统中未找到 Python 3。"
-2. 询问用户 Python 的安装位置，或建议安装：
+1. **项目特定 Python**（最高优先级）
+
+   如果项目的 `CLAUDE.md` 文件中指定了 Python 路径，使用该路径：
+   ```markdown
+   ## Environment
+   - Python: `~/.uv/python3/bin/python`
    ```
+
+   **使用场景：**
+   - 使用 uv、pyenv、conda 管理多个 Python 版本
+   - 项目特定的虚拟环境
+   - 非系统级 Python 安装
+
+2. **系统 Python**（默认）
+
+   如果没有项目特定配置，使用标准命令：
+   ```bash
+   python3 $SKILL_ROOT/scripts/poetry_checker.py
+   ```
+
+3. **找不到 Python 时的处理**
+
+   当第一次调用脚本失败时，用中文告知用户：
+   ```
+   检测到您的系统中未找到 Python 3。
+
    本技能需要 Python 3 来运行格律验证工具。
 
    选项 1：如果您已安装 Python 3，请告诉我完整路径（例如：/usr/local/bin/python3）
+
    选项 2：如果尚未安装，建议通过以下方式安装：
    - macOS: brew install python3
    - Ubuntu/Debian: sudo apt install python3
    - Windows: 从 python.org 下载安装
-   ```
-3. 如果用户提供了自定义路径，在后续所有脚本调用中使用该路径替代 `python3`
 
-**替代命令：**
-如果 `python3` 不可用，按此顺序尝试：
-- `python3`（优先）
-- `python`（如果指向 Python 3.x）
-- 用户提供的自定义路径
+   选项 3：如果您使用 uv 等工具管理 Python，可以在项目的 CLAUDE.md 中指定：
+   ## Environment
+   - Python: `~/.uv/python3/bin/python`
+   ```
+
+**检测流程：**
+1. 检查项目 CLAUDE.md 是否有 Python 配置 → 使用配置的路径
+2. 尝试 `python3` 命令 → 如果可用则使用
+3. 尝试 `python` 命令（验证是否为 Python 3.x）→ 如果是则使用
+4. 询问用户提供路径 → 使用用户提供的路径
+
+**会话缓存：** 找到可用的 Python 命令后，在整个会话中复用，不重复检测。
 
 ## 创作技巧
 

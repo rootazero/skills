@@ -62,9 +62,38 @@ For knowledge extraction tasks, predefine allowed entity types and relationship 
 
 ## Environment
 
-- Python: Use `python3` command (or `python` if it points to Python 3.x)
-- If `python3` is not found, ask the user for their Python installation path
+### Python Configuration
+
+**Project-specific Python (optional):**
+
+If you want to use a specific Python installation for this project (e.g., managed by uv, pyenv, or conda), specify it here:
+
+```markdown
+## Environment
+
+- Python: `~/.uv/python3/bin/python` (or your custom path)
+```
+
+**Default behavior (if not specified above):**
+- Skills will use `python3` command (or `python` if it points to Python 3.x)
+- If `python3` is not found, skills will ask for the Python installation path
 - Install Python packages: Use system's package manager or `pip3 install <package>`
+
+**Example configurations:**
+
+```markdown
+# uv-managed Python
+- Python: `~/.local/share/uv/python/cpython-3.12.0-macos-aarch64-none/bin/python3`
+
+# pyenv-managed Python
+- Python: `~/.pyenv/versions/3.11.5/bin/python`
+
+# conda environment
+- Python: `~/miniconda3/envs/myproject/bin/python`
+
+# Virtual environment
+- Python: `.venv/bin/python`
+```
 
 ## Conventions
 
@@ -185,21 +214,51 @@ cd $SKILL_ROOT && python3 scripts/tool.py
 
 **❌ Bad Practice:**
 ```bash
-# Hardcoded to specific machine
+# Hardcoded in SKILL.md - only works on one machine
 ~/.uv/python3/bin/python script.py
 /usr/local/bin/python3 script.py
 ```
 
-**✅ Good Practice:**
+**✅ Good Practice: Multi-Layer Detection**
 
-#### Use Standard Commands
+#### Detection Priority (in order)
+
+**1. Project-specific Python (highest priority)**
+
+Check if the project's `CLAUDE.md` specifies a Python path:
+
+```markdown
+## Environment
+
+- Python: `~/.uv/python3/bin/python` (or any custom path)
+```
+
+If found, use this path for all script calls in this project.
+
+**Use case:**
+- Users with multiple Python versions (via uv, pyenv, conda)
+- Project-specific virtual environments
+- Non-system Python installations
+
+**Example:**
+```bash
+# In project's CLAUDE.md
+## Environment
+- Python: `~/.local/share/uv/python/cpython-3.12.0-macos-aarch64-none/bin/python3`
+
+# Skills will use this Python for all scripts in this project
+```
+
+**2. Standard system Python (default)**
+
+If no project-specific Python is defined:
 
 ```bash
-# Default - works on most systems
+# Try standard command first
 python3 $SKILL_ROOT/scripts/tool.py
 ```
 
-#### Handle Missing Python Gracefully
+**3. Handle Missing Python Gracefully**
 
 When first script call fails with "command not found":
 
@@ -214,6 +273,10 @@ When first script call fails with "command not found":
 - macOS: brew install python3
 - Ubuntu/Debian: sudo apt install python3
 - Windows: 从 python.org 下载安装
+
+选项 3：如果您使用 uv 等工具管理 Python，可以在项目的 CLAUDE.md 中指定路径：
+## Environment
+- Python: `~/.uv/python3/bin/python`
 ```
 
 **English prompt:**
@@ -227,16 +290,37 @@ Option 2: If not installed, install via:
 - macOS: brew install python3
 - Ubuntu/Debian: sudo apt install python3
 - Windows: Download from python.org
+
+Option 3: If you use uv or similar tools, specify Python path in project's CLAUDE.md:
+## Environment
+- Python: `~/.uv/python3/bin/python`
 ```
 
-#### Fallback Order
+#### Complete Detection Flow
 
-Try in sequence:
-1. `python3` (preferred)
-2. `python` (if it points to Python 3.x, check with `python --version`)
-3. User-provided custom path
+```bash
+# Pseudocode for Python detection in skills
+if project_CLAUDE_md_has_python_path:
+    PYTHON_CMD = read_from_CLAUDE_md()  # e.g., ~/.uv/python3/bin/python
+elif command_exists("python3"):
+    PYTHON_CMD = "python3"
+elif command_exists("python") and is_python3("python"):
+    PYTHON_CMD = "python"
+else:
+    ask_user_for_python_path()
+    PYTHON_CMD = user_provided_path
 
-Store the working command and reuse for the session.
+# Use for all subsequent calls
+$PYTHON_CMD $SKILL_ROOT/scripts/tool.py
+```
+
+#### Benefits of Multi-Layer Detection
+
+- ✅ **Flexible**: Supports system Python, uv, pyenv, conda, venv
+- ✅ **Project-aware**: Different projects can use different Python versions
+- ✅ **User-friendly**: Works out-of-box for most users
+- ✅ **Explicit**: Project-specific settings are clearly documented in CLAUDE.md
+- ✅ **No hardcoding in skills**: Skills remain portable
 
 ### 3. Complete Example Template
 
@@ -294,8 +378,62 @@ python3 $SKILL_ROOT/scripts/my_tool.py --arg1 value1 --arg2 value2
 **Example session flow:**
 1. User invokes skill
 2. First script call needed
-3. If Claude Code: Auto-set `SKILL_ROOT="$HOME/.claude/skills/my-skill"`
-4. If other: Ask user once, store response
-5. Try `python3`, if fails ask user or suggest installation
-6. Execute script: `python3 $SKILL_ROOT/scripts/tool.py`
-7. All subsequent calls reuse same `SKILL_ROOT` and `python3`
+3. Check project's CLAUDE.md for Python path
+   - If found: Use specified path (e.g., `~/.uv/python3/bin/python`)
+   - If not: Use `python3` (or ask if unavailable)
+4. Set `SKILL_ROOT`:
+   - If Claude Code: Auto-set `SKILL_ROOT="$HOME/.claude/skills/my-skill"`
+   - If other: Ask user once, store response
+5. Execute script: `<python_cmd> $SKILL_ROOT/scripts/tool.py`
+6. All subsequent calls reuse same `SKILL_ROOT` and Python command
+
+### 5. Real-World Project Example
+
+Here's how a project using uv-managed Python would configure CLAUDE.md:
+
+```markdown
+# CLAUDE.md
+
+This file provides guidance to Claude Code when working in this project.
+
+## Project Purpose
+
+This project develops skills for classical Chinese poetry generation.
+
+## Environment
+
+### Python Configuration
+
+- Python: `~/.local/share/uv/python/cpython-3.12.0-macos-aarch64-none/bin/python3`
+
+**Why this path:**
+- Using uv for Python version management
+- Project requires Python 3.12+
+- Not using system Python to avoid conflicts
+
+**Setup for new contributors:**
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Python 3.12
+uv python install 3.12
+
+# Install dependencies
+uv pip install -r requirements.txt
+```
+
+## Development Workflow
+
+1. Ensure Python is configured (see Environment section above)
+2. Skills will automatically use the specified Python path
+3. No need to activate virtual environments - path is absolute
+```
+
+**Benefits of this approach:**
+
+- ✅ **Reproducible**: Everyone uses the same Python version
+- ✅ **Isolated**: No conflicts with system Python or other projects
+- ✅ **Explicit**: Python path is clearly documented
+- ✅ **Automatic**: Skills read CLAUDE.md and use the correct Python
+- ✅ **Flexible**: Each project can use different Python versions
