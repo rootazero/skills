@@ -43,7 +43,7 @@ description: When to use this skill and what it does
 
 1. Create skill folder with `SKILL.md`
 2. Add reference files in `references/` subdirectory
-3. Use skill-creator's validation: `~/.uv/python3/bin/python ~/.claude/skills/skill-creator/scripts/package_skill.py <skill-folder>`
+3. Use skill-creator's validation: `python3 ~/.claude/skills/skill-creator/scripts/package_skill.py <skill-folder>`
 4. Package outputs a `.skill` file (ZIP archive)
 
 ## Key Design Patterns
@@ -61,8 +61,9 @@ For knowledge extraction tasks, predefine allowed entity types and relationship 
 
 ## Environment
 
-- Python path: `~/.uv/python3/bin/python`
-- Install Python package: `cd ~/.uv/python3 && uv pip install <package>`
+- Python: Use `python3` command (or `python` if it points to Python 3.x)
+- If `python3` is not found, ask the user for their Python installation path
+- Install Python packages: Use system's package manager or `pip3 install <package>`
 
 ## Conventions
 

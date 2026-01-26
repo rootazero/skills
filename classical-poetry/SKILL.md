@@ -111,7 +111,7 @@ description: 创建古典汉诗（律诗/绝句/排律、词、曲、对联）�
 使用 `scripts/reference_builder.py` 获取相关古典诗词：
 
 ```bash
-~/.uv/python3/bin/python ~/.claude/skills/classical-poetry/scripts/reference_builder.py \
+python3 ~/.claude/skills/classical-poetry/scripts/reference_builder.py \
   --keyword "[主题]" --pages 2 --scope Sentence --top 30 \
   --out "/tmp/poetry_refs.json"
 ```
@@ -194,13 +194,13 @@ description: 创建古典汉诗（律诗/绝句/排律、词、曲、对联）�
 
 **对于诗：**
 ```bash
-~/.uv/python3/bin/python ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
+python3 ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
   --mode shi --text "[诗词文本]" --yun-shu [用户选择的韵书编号] [--trad如果是繁体]
 ```
 
 **对于词：**
 ```bash
-~/.uv/python3/bin/python ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
+python3 ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
   --mode ci --text "[词文本]" --ci-pai "[词牌名]" \
   --ci-pu [1|2] --yun-shu [用户选择的韵书编号] [--trad如果是繁体]
 ```
@@ -212,14 +212,14 @@ description: 创建古典汉诗（律诗/绝句/排律、词、曲、对联）�
 
 **对于曲：**
 ```bash
-~/.uv/python3/bin/python ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
+python3 ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
   --mode qu --text "[曲文本]" --qu-pai "[曲牌名]" \
   --yun-shu [用户选择的韵书编号] [--trad如果是繁体]
 ```
 
 **对于对联：**
 ```bash
-~/.uv/python3/bin/python ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
+python3 ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
   --mode couplet --upper "[上联]" --lower "[下联]" \
   --yun-shu [用户选择的韵书编号] [--auto-suggest]
 ```
@@ -271,7 +271,7 @@ description: 创建古典汉诗（律诗/绝句/排律、词、曲、对联）�
 对于对联，可使用 `--auto-suggest` 自动生成替代字：
 
 ```bash
-~/.uv/python3/bin/python ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
+python3 ~/.claude/skills/classical-poetry/scripts/poetry_checker.py \
   --mode couplet --upper "[上联]" --lower "[下联]" \
   --yun-shu [用户选择的韵书编号] --auto-suggest
 ```
@@ -369,9 +369,32 @@ description: 创建古典汉诗（律诗/绝句/排律、词、曲、对联）�
 - 1 = 钦定词谱（默认）
 - 2 = 龙榆生词谱
 
-**Python运行环境：** `~/.uv/python3/bin/python`
-
 **脚本路径：** `~/.claude/skills/classical-poetry/scripts/`
+
+### Python 环境要求
+
+**默认使用 `python3` 命令**来运行脚本。
+
+**环境检测：**
+在第一次调用 Python 脚本时，如果遇到 "command not found" 或类似错误：
+1. 用中文告知用户："检测到您的系统中未找到 Python 3。"
+2. 询问用户 Python 的安装位置，或建议安装：
+   ```
+   本技能需要 Python 3 来运行格律验证工具。
+
+   选项 1：如果您已安装 Python 3，请告诉我完整路径（例如：/usr/local/bin/python3）
+   选项 2：如果尚未安装，建议通过以下方式安装：
+   - macOS: brew install python3
+   - Ubuntu/Debian: sudo apt install python3
+   - Windows: 从 python.org 下载安装
+   ```
+3. 如果用户提供了自定义路径，在后续所有脚本调用中使用该路径替代 `python3`
+
+**替代命令：**
+如果 `python3` 不可用，按此顺序尝试：
+- `python3`（优先）
+- `python`（如果指向 Python 3.x）
+- 用户提供的自定义路径
 
 ## 创作技巧
 
